@@ -1,2 +1,2 @@
-# rust
+# Rust
 A repository to store my work as I learn Rust
