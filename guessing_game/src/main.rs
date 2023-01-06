@@ -7,6 +7,7 @@ fn main() {
     let answer = rand::thread_rng().gen_range(1..=100);
 
     loop {
+        //NOTE: The `!` indicates a macro, not a function, is being called
         println!("Please input your guess (1-100).");
         //`let` is a constant. `mut` indicates mutability (effectively becomes a var)
          //`::` indicates a static function (as opposed to `.` which is a concrete function)
@@ -18,7 +19,9 @@ fn main() {
             .read_line(&mut guess) 
             .expect("Failed to read line");
             
-        //NOTE: Rust allows name shadowing, so this could be just `guess`
+        //NOTE: Rust allows name shadowing, so this could be just `guess` in order to mutate
+        // without the `mut` keyword.  
+        // This can cause subtle errors if changing the type too, and is best avoided.
         //`parse()` converts a string to the type that of your new variable (`u32`).
         //`match` is a switch statement for possible cases (called `arms`)
         //This match handles a good parse result `OK` and a parse exception`Err`.
