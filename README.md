@@ -38,6 +38,56 @@ following semantic concepts:
 * Selection: evaluates a bool.  Swift syntax style.
 * Iteration: same `for` & `while` as Swift, plus `loop` (needs `break`)
 
+### Structs
+
+Rust does not have classes, only structs. Unlike Swift, structs are either
+entirely mutable or immutable.  You can make a partial deep copy like so:
+
+```rust
+let user1 = User {
+    email, // String
+    username, // String
+    active: true, // Bool
+    sign_in_count: 1, // i32
+};
+//NOTE: user1 is invalidated after this b/c ownership of its username String
+//is passed to user2.
+let mut user2 = User {
+    email: String::from("another@example.com"),
+    ..user1 //comes last to specify that remaining fields come from user1
+};
+```
+
+You can also create tuple structs for brevity:
+
+```rust
+struct Color(i32, i32, i32);
+let black = Color(0, 0, 0);
+```
+
+Or unit-like structs with no fields:
+
+```rust
+struct AlwaysEqual;
+let subject = AlwaysEqual;
+```
+
+Structs cannot have built-in methods.  Instead you add associated functions:
+
+```rust
+struct Rectangle {
+    width: u32,
+    height: u32,
+}
+
+impl Rectangle {
+    // Borrows immutable self w/reference; we don't want to write, just read.
+    fn area(&self) -> u32 { // if you need to write, use `&mut self`
+        self.width * self.height
+    }
+}
+```
+
 ### Memory
 
 Memory is managed through ownership. There are two possible storage mechanisms:
@@ -55,11 +105,11 @@ Ownership rules:
 Rust memory management is best demonstrated by the following assignments:
 
 ```rust
-    let x = 5;
-    let y = x;
+let x = 5;
+let y = x;
 
-    let s1 = String::from("hello");
-    let s2 = s1;
+let s1 = String::from("hello");
+let s2 = s1;
 ```
 
 Both allocate data to a stack.  The first two allocate copies of a scalar value.
@@ -84,10 +134,10 @@ a mutable reference can only have one borrower (compile error otherwise).
 You can borrow slice references like so:
 
 ```rust
-    let s = String::from("hello world");
+let s = String::from("hello world");
 
-    let hello = &s[..5]; //equivalent to 0..5
-    let world = &s[6..]; //equivalent to 6..len
+let hello = &s[..5]; //equivalent to 0..5
+let world = &s[6..]; //equivalent to 6..len
 ```
 
 Generally it is better for a fn to have accept a slice as a parameter, rather
