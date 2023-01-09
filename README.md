@@ -29,8 +29,41 @@ Rust has 4 scalar types:
 * Tuple (collection of indexed types i.e. `(u32, f64, boo)`)
 * Array (fixed size & single type, i.e. `[i32; 5]`)
 
-Rust uses snake_case for fn and let names. fn has Swift-style parameters and
-return type declaration, i.e. `fn plus_one(x: i32) -> i32`.  It uses the
+You can also define your own enum types. Enum types can contain attributes.
+Nullability is covered by the predifined Option enum, i.e.
+
+```rust
+enum Option<T> {
+    None,
+    Some(T),
+}
+
+fn main() {
+    let some_char = Some('e');
+    let absent_number: Option<i32> = None
+}
+
+fn plus_one(x: Option<i32>) -> Option<i32> {
+    match x {
+        Some(i) => Some(i + 1),
+        _ => None, // Default case
+    }
+}
+```
+
+You can also use an `if let` statement to unwrap optionals, just like Swift:
+
+```rust
+let config_max = Some(3u8);
+if let Some(max) = config_max {
+    println!("The maximum is configured to be {}", max);
+} else {
+    println!("The maximum is null!");
+}
+```
+
+Rust always uses snake_case for fn and let names. fn has Swift-style parameters
+and return type declaration, i.e. `fn plus_one(x: i32) -> i32`.  It uses the
 following semantic concepts:
 
 * Statement: performs an action with no return value. Has trailing `;`
