@@ -13,6 +13,35 @@ The initial state of this project can be recreated by executing `cargo new [proj
 * To update dependencies: `cargo update`
 * To generate dependency documentation: `cargo doc --open`
 
+You can create and reference your own modules like so:
+
+```text
+backyard
+├── Cargo.lock
+├── Cargo.toml
+└── src
+    ├── garden
+    │   └── vegetables.rs
+    ├── garden.rs
+    └── main.rs
+```
+
+`src/main.rs` contents:
+
+```rust
+//Just like a Swift import statement, `use` shortens an absolute path.
+//You can also just use a glo operator, i.e. `use std::collections::*;`
+use crate::garden::vegetables::Asparagus;
+
+//`pub` sets access to public. Modules, structs, and fns are private by default.
+pub mod garden; //tells the compiler to include code it finds in src/garden.rs
+
+fn main() {
+    let plant = Asparagus {};
+    println!("I'm growing {:?}!", plant);
+}
+```
+
 ## Basics
 
 ### Types
