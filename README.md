@@ -58,6 +58,14 @@ Rust has 4 scalar types:
 * Tuple (collection of indexed types i.e. `(u32, f64, boo)`)
 * Array (fixed size & single type, i.e. `[i32; 5]`)
 
+3+ collection types:
+
+* Vector (Variable # of values, i.e. `let v: Vec<i32> = Vec::new();`)
+* HashMap (Variable # of key-values, i.e. `let mut scores = HashMap::new();`)
+* String (Variable # of characters, i.e. `let mut s = String::new();`)
+
+NOTE: Srings do not support indexing, and slicing can cause runtime exceptions.
+
 You can also define your own enum types. Enum types can contain attributes.
 Nullability is covered by the predifined Option enum, i.e.
 
@@ -205,3 +213,6 @@ let world = &s[6..]; //equivalent to 6..len
 Generally it is better for a fn to have accept a slice as a parameter, rather
 than a string, because you can use strings where slices are expected but not
 the reverse.  `fn first_word(s: &String)` vs. `fn first_word(s: &str)`
+
+### Errors
+
