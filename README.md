@@ -88,7 +88,7 @@ fn plus_one(x: Option<i32>) -> Option<i32> {
 }
 ```
 
-You can also use an `if let` statement to unwrap optionals, just like Swift:
+You can use an `if let` statement to unwrap optionals, just like Swift:
 
 ```rust
 let config_max = Some(3u8);
@@ -96,6 +96,26 @@ if let Some(max) = config_max {
     println!("The maximum is configured to be {}", max);
 } else {
     println!("The maximum is null!");
+}
+```
+
+Enum types are also used to represent error cases, and can be unwrapped as well:
+
+```rust
+enum Result<T, E> {
+    Ok(T),
+    Err(E),
+}
+
+use std::fs::File;
+
+fn main() {
+    let greeting_file_result = File::open("hello.txt");
+
+    let greeting_file = match greeting_file_result {
+        Ok(file) => file,
+        Err(error) => panic!("Problem opening the file: {:?}", error),
+    };
 }
 ```
 
@@ -216,3 +236,48 @@ the reverse.  `fn first_word(s: &String)` vs. `fn first_word(s: &str)`
 
 ### Errors
 
+Normally you get the last line from the backtrace after a runtime panic. To get
+more use `RUST_BACKTRACE=1 cargo run`.
+
+Some structs have methods that provide closures instead of Result
+types. In the exampled below the File struct has a `unwrap_or_else`method that
+returns a closure with an error that the error type is then matched against:
+
+```rust
+use std::fs::File;
+use std::io::ErrorKind;
+
+fn main() {
+    let greeting_file = File::open("hello.txt").unwrap_or_else(|error| {
+        if error.kind() == ErrorKind::NotFound {
+            File::create("hello.txt").unwrap_or_else(|error| {
+                panic!("Problem creating the file: {:?}", error);
+            })
+        } else {
+            panic!("Problem opening the file: {:?}", error);
+        }
+    });
+}
+```
+
+`unwrap`, `expect`, and `?` provide shortcuts for handling errors, but are not
+safe on their own. Examples of each are below:
+
+```rust
+fn read_username_from_file() -> Result<String, io::Error> {
+    //`unwrap()` same as `!!` in swift. `expect()` is `!!` with custom error msg.
+    let mut username_file = File::open("hello.txt").unwrap();
+    let mut username = String::new();
+    //`?` will return early out of whole function with error as result. Error
+    //must be a return type of the function
+    username_file.read_to_string(&mut username)?;
+    Ok(username)
+}
+```
+
+You can chain `?` for even shorter expressions like this:
+`File::open("hello.txt")?.read_to_string(&mut username)?;`
+
+For examples, prototype code, and tests you should panic! instead of returning a
+Result type. After prototype code becomes production code you should return
+Response types wherever possible.
