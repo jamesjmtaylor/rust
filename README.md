@@ -66,6 +66,22 @@ Rust has 4 scalar types:
 
 NOTE: Srings do not support indexing, and slicing can cause runtime exceptions.
 
+Generic types are represented with `T` by convention.  To differentiate generic
+types in the same struct use `T1`, `T2`, etc. Generic types are just as
+performant as any other type due to compile-time monomorphization.
+
+Lifetimes are a kind of generic. Rather than ensuring that a type has the 
+behavior we want, lifetimes ensure that references are valid as long as we need
+ them to be.
+
+```rust
+i32          // a pointer
+&i32         // a reference
+&'a i32      // a reference with an explicit lifetime
+&'a mut i32  // a mutable reference with an explicit lifetime
+&'static i32 // a static explicit lifetime
+```
+
 You can also define your own enum types. Enum types can contain attributes.
 Nullability is covered by the predifined Option enum, i.e.
 
@@ -174,6 +190,47 @@ impl Rectangle {
     // Borrows immutable self w/reference; we don't want to write, just read.
     fn area(&self) -> u32 { // if you need to write, use `&mut self`
         self.width * self.height
+    }
+}
+```
+
+Rust uses "traits" for interfaces, just like Swift. Traits can have default
+implementations and be passed as parameters, i.e.
+
+```rust
+pub trait Summary {
+    fn summarize_author(&self) -> String
+    fn summarize(&self) -> String { 
+        String::from("(Read more...)") // Default implementation
+    }
+}
+
+impl Summary for Tweet { 
+    //NOTE: Does not need `summarize` because of default implentation above
+    fn summarize_author(&self) -> String {
+        format!("@{}", self.username)
+    }
+} 
+
+//Trait as a Parameter
+pub fn notify(item: &impl Summary) {
+    println!("Breaking news! {}", item.summarize());
+}
+
+//Multiple trait bounds for a single parameter (not possible in Swift)
+pub fn notify(item: &(impl Summary + Display)) {
+    ...
+}
+
+//Returning a Trait type:
+fn returns_summarizable() -> impl Summary {
+    Tweet {
+        username: String::from("horse_ebooks"),
+        content: String::from(
+            "of course, as you probably already know, people",
+        ),
+        reply: false,
+        retweet: false,
     }
 }
 ```
