@@ -235,6 +235,8 @@ fn returns_summarizable() -> impl Summary {
 }
 ```
 
+## Advanced Concepts
+
 ### Memory
 
 Memory is managed through ownership. There are two possible storage mechanisms:
@@ -338,3 +340,80 @@ You can chain `?` for even shorter expressions like this:
 For examples, prototype code, and tests you should panic! instead of returning a
 Result type. After prototype code becomes production code you should return
 Response types wherever possible.
+
+### Functional Programming
+
+The two primary functional paradigms in rust are Closures & Iterators. Because
+of compile time loop "unrolling", there are no performance penalties to using
+either of these concepts.
+
+#### Closures
+
+Rust supports passing closures as desired. If closures have parameters, they  
+appear between the two vertical bars. Closure types are inferred, but can also
+ be explicitly definied, as shown below.
+
+```rust
+let add_one_v2 = |x: u32| -> u32 { x + 1 }; //Max verbosity
+let add_one_v4 = |x|               x + 1  ; //Min verbosity
+```
+
+The first type inferred for each parameter must be used through the program.
+Closures passed to threads must explicitly declare a `move` to that thread:
+
+```rust
+let list = vec![1, 2, 3];
+thread::spawn(move || println!("From thread: {:?}", list))
+```
+
+Without `move` the list object is invalidated in the spawning thread. There are
+3 types of closure function traits that closures can implement:
+
+1. FnOnce: all closures implement at least this trait. These can only be called
+once, move captured values out their body, and implement none of the other Fn traits.
+2. FnMut: all closures that don’t move captured values out of their body but
+that might mutate the captured values implement this. Can be called more than once.
+3. Fn: all closures that don’t move captured values out of their body or mutate
+captured values, as well as closures that capture nothing from their environment.
+Can be called more than once. Important in cases such as calling a closure
+multiple times concurrently.
+
+Using a closure trait as a function parameter type is shown below:
+
+```rust
+impl<T> Option<T> {
+    pub fn unwrap_or_else<F>(self, f: F) -> T
+    where
+        F: FnOnce() -> T
+    {
+        match self {
+            Some(x) => x,
+            None => f(),
+        }
+    }
+}
+```
+
+#### Iterators
+
+Rust iterators work just like Swift iterators, and can be created from arrays
+and vectors with `.iter()`. Iterator is a trait that your structs can implement.
+
+```rust
+pub trait Iterator {
+    type Item; //defines an associated type with this trait
+    fn next(&mut self) -> Option<Self::Item>;
+    // methods with default implementations excluded
+}
+```
+
+Iterators are consumed as they are iterated through. `for` loops actually apply
+the `mut` keyword behind the scenes to accomplish `for val in vector_iterator {`.
+`map` & `filter` operate on an iterator to generate a new iterator by applying
+the specified closure function. To collect the results into a collection, use
+`collect` afterwards.
+
+```rust
+let v1: Vec<i32> = vec![1, 2, 3];
+let v2: Vec<_> = v1.iter().map(|x| x + 1).collect();
+```
