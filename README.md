@@ -4,7 +4,8 @@ A repository to store my work as I learn Rust
 
 ## Cargo
 
-The initial state of this project can be recreated by executing `cargo new [projectName]` from the terminal.
+The initial state of this project can be recreated by executing
+`cargo new [projectName]` from the terminal.
 
 * To build: `cargo build`
 * To build & run: `cargo run`
@@ -12,6 +13,8 @@ The initial state of this project can be recreated by executing `cargo new [proj
 * To build an optimized executable: `cargo build --release`
 * To update dependencies: `cargo update`
 * To generate dependency documentation: `cargo doc --open`
+* To create a library crate: `cargo new [libName] --lib`
+* To install a binary crate for local use `cargo install [externalCrateName]`
 
 You can create and reference your own modules like so:
 
@@ -41,6 +44,37 @@ fn main() {
     println!("I'm growing {:?}!", plant);
 }
 ```
+
+In the cargo.toml you can declare additional profiles, i.e.
+
+```toml
+[profile.dev]
+opt-level = 0
+
+[profile.release]
+opt-level = 3
+```
+
+See [Profiles](https://doc.rust-lang.org/cargo/reference/profiles.html) for more
+information.
+
+You can publish your own crate to crates.io.  Document library methods with `///`
+Comments are formatted as markdown. Running `cargo doc --open` will build & open
+the HTML for your current crate and its dependencies. Common sections include:
+
+* Examples: How your function is used (automatically tested w/ `cargo test`)
+* Panics: When your function could panic.
+* Errors: For functions that return a `Result`
+* Safety: How your function might be unsafe.
+
+To document your crate, use `//!` at the top of the file.
+
+To publish a crate, you must first login with `cargo login your_api_token`. You
+can add metadata to your crate in the cargo.toml.  See [Cargo Metadata](https://doc.rust-lang.org/cargo/commands/cargo-metadata.html)
+for more info.  Once ready, publish with `cargo publish`.
+
+A workspace is a set of packages that share the same Cargo.lock and output
+directory. See `./add` for an example.
 
 ## Basics
 
