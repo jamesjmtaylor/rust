@@ -375,6 +375,10 @@ For examples, prototype code, and tests you should panic! instead of returning a
 Result type. After prototype code becomes production code you should return
 Response types wherever possible.
 
+### Object Oriented Programming
+
+#### Inheritence
+
 ### Functional Programming
 
 The two primary functional paradigms in rust are Closures & Iterators. Because
@@ -451,3 +455,152 @@ the specified closure function. To collect the results into a collection, use
 let v1: Vec<i32> = vec![1, 2, 3];
 let v2: Vec<_> = v1.iter().map(|x| x + 1).collect();
 ```
+
+## Concurrency
+
+### Threads
+
+Each rust program runs in its own process.  A process can spawn multiple threads.
+Rust operates on a 1:1 model, that is 1 rust thread = 1 OS thread (as opposed
+to Kotlin corroutines which use an n:1 model). Thread creation is shown below:
+
+```rust
+use std::thread;
+use std::time::Duration;
+
+fn main() {
+    thread::spawn(|| {
+        for i in 1..10 {
+            println!("hi number {} from the spawned thread!", i);
+            thread::sleep(Duration::from_millis(1));
+        }
+    });
+
+    for i in 1..5 {
+        println!("hi number {} from the main thread!", i);
+        thread::sleep(Duration::from_millis(1));
+    }
+}
+```
+
+You can use thread handles, i.e. `let handle = thread::spawn(|| {` in order to
+control when the thread is executed.  Calling `handle.join().unwrap();` joins
+the handle into the declaring thread and causes it to execute synchronously in
+that thread.
+
+### Data Passing
+
+If you want to use a variable from a calling thread in the called thread, you
+must use the `move` keyword as shown below:
+
+```rust
+use std::thread;
+
+fn main() {
+    let v = vec![1, 2, 3];
+
+    let handle = thread::spawn(move || {
+        println!("Here's a vector: {:?}", v);
+    });
+
+    handle.join().unwrap();
+}
+```
+
+You can also use channels to pass data from threads:
+
+```rust
+use std::sync::mpsc;
+use std::thread;
+use std::time::Duration;
+
+fn main() {
+    let (tx, rx) = mpsc::channel();
+
+    thread::spawn(move || {
+        let vals = vec![
+            String::from("hi"),
+            String::from("from"),
+            String::from("the"),
+            String::from("thread"),
+        ];
+
+        for val in vals {
+            tx.send(val).unwrap();
+            thread::sleep(Duration::from_secs(1));
+        }
+    });
+
+    for received in rx {
+        println!("Got: {}", received);
+    }
+}
+```
+
+The example above creates a mpsc (multiple producers, single consumer) channel.
+That channel is then passed with the `move` keyword to a spawned thread.  The
+thread then uses it to send a stream of values to the calling thread. Because
+the channel is mpsc, you can call `let tx1 = tx.clone` in order to give another
+thread a clone of the original transmitter.  Both will broadcast to the same rx.
+
+### Shared-State Concurrency
+
+Mutexes allow only one thread to access some data at any given time. You must
+lock the data when you access it and unlock when finished.  Below is an example:
+
+```rust
+use std::sync::{Arc, Mutex};
+use std::thread;
+
+fn main() {
+    let counter = Arc::new(Mutex::new(0));
+    let mut handles = vec![];
+
+    for _ in 0..10 {
+        let counter = Arc::clone(&counter);
+        let handle = thread::spawn(move || {
+            let mut num = counter.lock().unwrap();
+
+            *num += 1;
+        });
+        handles.push(handle);
+    }
+
+    for handle in handles {
+        handle.join().unwrap();
+    }
+
+    println!("Result: {}", *counter.lock().unwrap());
+}
+```
+
+Note that we use "Arc", or Atomic Reference Counting, in order to share the
+mutex across multiple threads.  If only one thread needs access at a time, use a
+Mutex:
+
+```rust
+se std::sync::Mutex;
+
+fn main() {
+    let m = Mutex::new(5);
+    {
+        let mut num = m.lock().unwrap();
+        *num = 6;
+    }
+    println!("m = {:?}", m);
+}
+```
+
+Mutexes return type Rc\<T>, while arcs return Arc\<T>.
+Note even with the compile-time safety provided by Arc & Mutex, deadlocks are
+still possible.
+
+### Sync & Send Traits
+
+Channels, mutexes, and arcs are part of the standard library and are built using
+the Sync and Send traits, which are part of the language. Send is implemented by
+almost every Rust type, and indicates that type can be sent across threads. Sync
+indicates a type is can be referenced by multiple threads.  If a type is
+composed completely of properties that conform to Sync & Send, it inherits
+conformance by default.  Manually implementing these traits involves
+implementing unsafe Rust code.
