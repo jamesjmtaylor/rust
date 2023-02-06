@@ -377,7 +377,55 @@ Response types wherever possible.
 
 ### Object Oriented Programming
 
-#### Inheritence
+Rust differs from mainstream OOP languages like Java in that it does not support
+inheritence.  There is no way to define a struct that inherits the parent
+struct’s fields and methods.  In order to support polymorphism you should use
+traits and generic types. An example where various UI components all support
+the Draw trait is below:
+
+```rust
+pub trait Draw {
+    fn draw(&self);
+}
+
+pub struct Screen<T: Draw> {
+    pub components: Vec<T>,
+}
+
+impl<T> Screen<T>
+where
+    T: Draw,
+{
+    pub fn run(&self) {
+        for component in self.components.iter() {
+            component.draw();
+        }
+    }
+}
+```
+
+This is very similar to the pattern of "Interface-Oriented Programming" of
+Kotlin & Swift.  It has the advantage of avoiding the inheritence "pyramid of
+doom". Below is a depiction of how a component might implement the Draw trait:
+
+```rust
+pub struct Button {
+    pub width: u32,
+    pub height: u32,
+    pub label: String,
+}
+
+impl Draw for Button {
+    fn draw(&self) {
+        // code to actually draw a button
+    }
+}
+```
+
+NOTE: generics that conform to traits cannot use static dispatch because the
+compiler doesn’t know all the types that might be used with the code that’s
+using trait object.  Instead, dynamic dispatch is used, which has a small
+performance penalty.
 
 ### Functional Programming
 
