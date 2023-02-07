@@ -149,6 +149,20 @@ if let Some(max) = config_max {
 }
 ```
 
+Unlike Swift, you can also use `while let` to unwrap arrays:
+
+```rust
+let mut stack = Vec::new();
+
+stack.push(1);
+stack.push(2);
+stack.push(3);
+
+while let Some(top) = stack.pop() {
+    println!("{}", top);
+}
+```
+
 Enum types are also used to represent error cases, and can be unwrapped as well:
 
 ```rust
@@ -379,7 +393,11 @@ Response types wherever possible.
 
 Rust differs from mainstream OOP languages like Java in that it does not support
 inheritence.  There is no way to define a struct that inherits the parent
-struct’s fields and methods.  In order to support polymorphism you should use
+struct’s fields and methods.
+
+#### Polymorpism
+
+In order to support polymorphism you should use
 traits and generic types. An example where various UI components all support
 the Draw trait is below:
 
@@ -426,6 +444,55 @@ NOTE: generics that conform to traits cannot use static dispatch because the
 compiler doesn’t know all the types that might be used with the code that’s
 using trait object.  Instead, dynamic dispatch is used, which has a small
 performance penalty.
+
+#### Patterns and Matching
+
+Matching is Rust's equivalent of the `switch` (Java & Swift) and has already
+been used elsewhere to handle the Optional and Result structs. It can also use
+the following:
+
+* Literals: `1 | 2 => println!("one or two"),` or `1..=5 => println!("one through five"),`
+* Destructured arrays: `while let x = vec.pop() {`
+* Structs: `Some(50) => println!("Got 50"),`
+* Enums: `Message::Write(text) =>  println!("Text message: {text}"),`
+* Tuples: `let (a,b,c) = [1,2,3];`
+* Variables: `x =>  println!("Got x")`
+* Wildcards: `_ => println!("This is the match default case")`
+
+Patterns are just variables assigned to expressions: `let PATTERN = EXPRESSION;`
+They can be refutable or irrefutable. Patterns that match for any expression are
+"irrefutable".  An example would be `x` in `let x = 5;` because `x` matches
+anything and cannot fail to match. "Refutable" patterns are where a failure to
+match is possible, i.e. `Some(x)` in the expression `if let Some(x) = a_value`.
+Understanding the distinction is important for understanding error messages like
+the one below:
+
+```log
+$ cargo run
+   Compiling patterns v0.1.0 (file:///projects/patterns)
+error[E0005]: refutable pattern in local binding: `None` not covered
+ --> src/main.rs:3:9
+  |
+3 |     let Some(x) = some_option_value;
+  |         ^^^^^^^ pattern `None` not covered
+  |
+  = note: `let` bindings require an "irrefutable pattern", like a `struct` or an `enum` with only one variant
+  = note: for more information, visit https://doc.rust-lang.org/book/ch18-02-refutability.html
+note: `Option<i32>` defined here
+  = note: the matched value is of type `Option<i32>`
+help: you might want to use `if let` to ignore the variant that isn't matched
+  |
+3 |     let x = if let Some(x) = some_option_value { x } else { todo!() };
+  |     ++++++++++                                 ++++++++++++++++++++++
+
+For more information about this error, try `rustc --explain E0005`.
+error: could not compile `patterns` due to previous error
+```
+
+Because we didn’t cover (and couldn’t cover!) every valid value with the pattern
+Some(x), Rust rightfully produces a compiler error. This example can be fixed
+with an `if let`. Inversely, you'll get a compiler warning if you use `if let`
+on an irrefutable pattern such as `if let x = 5`.
 
 ### Functional Programming
 
