@@ -11,17 +11,22 @@ This documents the steps that I took to build my own Starcraft bot in Rust. A li
 1. Install [cmake](https://cmake.org/).
 1. Install [Rust](https://www.rust-lang.org/tools/install).  
 1. Install [Wine](https://wine.htmlvalidator.com/install-wine-on-ubuntu-22.04.html).  I used `sudo apt install --install-recommends winehq-stable`
+1. Run `winecfg`, go to graphics tab, check "Emulate a virtual desktop" and set initial resolution.  This allows SC to run windowed, which can be more reliable.
+1. Install [clang](https://clang.llvm.org).  I used `sudo apt install clang --install-suggests`
 1. Download StarCraft 1.16.1 (I just did a google search, since Battlenet doesn't specifically have version 1.16.1).
 1. Run the StarCraft.exe with Wine with `wine StarCraft.exe `
 1. Install the latest [BWAPI](https://github.com/bwapi/bwapi/releases).  I downloaded and extracted the BWAPI.7z archive and placed it in my Starcraft directory.
-1. Git clone and build [BWAPI-C](https://github.com/RnDome/bwapi-c):
+1. Clone [RSBWAPI](https://github.com/Bytekeeper/rsbwapi).
+1. `cd rsbwapi/bwapi_wrapper` and clone [BWAPI](https://github.com/bwapi/bwapi/tree/3438abd8e0222f37934ba62b2130c3933b067678)
+1. Build the project with `cargo build`.
+1. Launch Chaoslauncher `wine bwapi_wrapper/bwapi/Release_Binary/Chaoslauncher/Chaoslauncher.exe` 
+1. NOTE: Need to figure out how to have "BWAPI Injector x.x.x" as a selectable option.
+1. NOTE: Need to figure out how to run `rsbwapi/example_bot` with the injector.
+1. Run a game against Blizzard's AI
+   1. Go to **Single Player** -> **Expansion**
+   2. Select any user and click **OK**
+   3. Click **Play Custom**, select a map, and start a game
 
-```
-Github/ $ git clone git@github.com:RnDome/bwapi-c.git && cd bwapi-c
-Github/bwapi-c/ $ mkdir build && cd build
-Github/bwapi-c/build $ cmake .. -DBWAPI_PATH=~/Downloads/BWAPI
-Github/bwapi-c/build $ make
-```
 
 ## Gotchas
 
@@ -44,4 +49,5 @@ So I had to remove the installation with `sudo apt remove --purge --auto-remove 
 * [SSCAI map pack](https://sscaitournament.com/files/sscai_map_pack.zip)
 * [BWAPI](https://github.com/bwapi/bwapi/)
 * [BWAPI-C](https://github.com/RnDome/bwapi-c)
+* [RSBWAPI](https://github.com/Bytekeeper/rsbwapi)
 
