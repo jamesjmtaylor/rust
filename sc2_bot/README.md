@@ -7,14 +7,14 @@ This documents the steps that I took to build my own Starcraft bot in Rust. A li
 1. Install [Rust](https://www.rust-lang.org/tools/install)
 1. Install [Git](https://git-scm.com/download/win)
 1. Install [VS Code](https://code.visualstudio.com/download)
-1. Download & install [StarCraft2](https://code.visualstudio.com/download)
+1. Download & install [StarCraft2](https://starcraft2.com/en-us/)
 1. Download the Melee map pack from [SC2Client](https://github.com/Blizzard/s2client-proto#linux-packages)
 1. Create a new Maps folder in your StarCraft2 install directory and unzip the maps from the previous step (the password to the zip should be "iagreetotheeula")
 1. Add SC2PATH variable to your [environment variables](https://docs.oracle.com/en/database/oracle/machine-learning/oml4r/1.5.1/oread/creating-and-modifying-environment-variables-on-windows.html) with the path to your StarCraft II install directory.
 1. Execute `cargo run`
 
 
-## Process (Ubuntu)
+## Process (Ubuntu) - never completed
 
 1. Create an [Ubuntu 22.04 partition](https://help.ubuntu.com/stable/ubuntu-help/disk-partitions.html.en) on my personal computer.  I did this because I didn't particularly want to start installing games on my work laptop, and BWAPI-C is best supported on Linux.
 1. Install [Git](https://www.digitalocean.com/community/tutorials/how-to-install-git-on-ubuntu-22-04). I used `sudo apt install git`
@@ -56,6 +56,8 @@ So I had to remove the installation with `sudo apt remove --purge --auto-remove 
 
 ## References
 
+* [rust-sc2](https://github.com/jamesjmtaylor/rust-sc2)
+* [StarCraft II API](https://github.com/Blizzard/s2client-proto#linux-packages)
 * [A bot for Starcraft in Rust](https://habr.com/en/post/436254/)
 * [Tutorial for creating a StarCraft bot](https://sscaitournament.com/index.php?action=tutorial)
 * [SSCAI map pack](https://sscaitournament.com/files/sscai_map_pack.zip)
