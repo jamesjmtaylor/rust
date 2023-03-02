@@ -13,12 +13,7 @@ impl Player for ResolutionBot {
 
     /// Called once on first step
     fn on_start(&mut self) -> SC2Result<()> {
-        // Splitting workers to closest mineral crystals
-		for u in &self.units.my.workers {
-			if let Some(mineral) = self.units.mineral_fields.closest(u) {
-				u.gather(mineral.tag(), false);
-			}
-		}
+        self.get_minerals();
         Ok(())
     }
 
@@ -47,7 +42,21 @@ impl Player for ResolutionBot {
 }
 
 impl ResolutionBot {
-    /* code here */
+    fn get_minerals(&mut self) {
+        let mut idle_workers = self.units.my.workers.idle();
+
+        // Splitting workers to closest mineral crystals
+		for u in &idle_workers {
+			if let Some(mineral) = self.units.mineral_fields.closest(u) {
+				u.gather(mineral.tag(), false);
+			}
+		}
+    }
+
+    // fn chat(&mut self) {
+    //     self.Action.chat("test",false);
+    //     // self.action.chat("test", false);
+    // }
 }
 
 fn main() -> SC2Result<()> {
