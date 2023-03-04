@@ -138,7 +138,8 @@ fn plus_one(x: Option<i32>) -> Option<i32> {
 }
 ```
 
-You can use an `if let` statement to unwrap optionals, just like Swift:
+You can use an `if let` statement to unwrap optionals, almost like Swift (you
+need to wrap the unwrapped value in `Some()`):
 
 ```rust
 let config_max = Some(3u8);

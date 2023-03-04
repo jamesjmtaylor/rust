@@ -20,13 +20,17 @@ impl Player for ResolutionBot {
 
     /// Called on every game step
     fn on_step(&mut self, _iteration: usize) -> SC2Result<()> {
-        //TODO: Test if one is already being built.
+        self.defend_townhall();
+        self.get_minerals();
         if self.counter().all().count(UnitTypeId::SupplyDepot) < 1 {
             self.construct_building(UnitTypeId::SupplyDepot);
-        } else if self.counter().all().count(UnitTypeId::Barracks) < 1  {
+        } else if self.counter().all().count(UnitTypeId::Barracks) < 2  {
             self.construct_building(UnitTypeId::Barracks);
-        } else {
+        } 
+        if self.counter().all().count(UnitTypeId::Marine) < 10 {
             self.build_marine();
+        } else {
+            self.attack_enemy_townhall();
         }
         Ok(())
     }
@@ -46,7 +50,29 @@ impl Player for ResolutionBot {
     }
 }
 
+const MARINE_RANGE : f32 = 5.0;
 impl ResolutionBot {
+    fn defend_townhall(&mut self) {
+        if let Some(townhall) = self.units.my.townhalls.first() {
+            let defend_location = townhall.position();
+            let enemy = &self.units.enemy.all;
+            let targets = enemy.filter(|e| e.is_closer(20.0, defend_location));
+            for marine in &self.units.my.units.of_type(UnitTypeId::Marine) {
+                if let Some(target) = targets
+                .in_range_of(marine, MARINE_RANGE).iter()
+                .min_by_key(|t| t.hits())
+                .or_else(|| targets.closest(marine)) {
+                    marine.attack(Target::Pos(target.position()), false)
+                }
+            }
+        } 
+    }
+
+    fn attack_enemy_townhall(&mut self) {
+        for marine in &self.units.my.units.of_type(UnitTypeId::Marine) {
+            marine.move_to(Target::Pos(self.enemy_start), false)
+        }
+    }
 
     fn get_minerals(&mut self) {
         let idle_workers = self.units.my.workers.idle();
@@ -61,11 +87,9 @@ impl ResolutionBot {
     }
 
 
-    fn construct_building(&mut self, id: UnitTypeId) { 
-        // Building near start, close to map center to not accidentally block mineral line.
+    fn construct_building(&mut self, id: UnitTypeId) { // Build close to map center to not accidentally block mineral line.
         let main_base = self.start_location.towards(self.game_info.map_center, 8.0);
-        if self.can_afford(id, false) {
-            // Finding a perfect location for a building.
+        if self.can_afford(id, false) { // Finding exact location for the building.
             if let Some(location) = self.find_placement(
                 UnitTypeId::Barracks,
                 main_base,
@@ -82,12 +106,11 @@ impl ResolutionBot {
     }
 
     fn build_marine(&mut self) {
-        for barrack in self.units.my.structures.iter()
-        .of_type(UnitTypeId::Barracks).ready().idle() {
+        let barracks =  &self.units.my.structures.of_type(UnitTypeId::Barracks);
+        for barrack in barracks.ready().idle() {
             if self.can_afford(UnitTypeId::Marine, true) {
                 barrack.train(UnitTypeId::Marine, false);
-                //TODO: Fix this.
-                // self.subtract_resources(UnitTypeId::Marine, true);
+                self.subtract_resources(UnitTypeId::Marine, true);
             } else { // Can't afford more marines. Stop the iterator.
                 break;
             }
