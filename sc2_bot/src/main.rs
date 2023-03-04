@@ -3,7 +3,9 @@ use rust_sc2::prelude::*;
 
 #[bot]
 #[derive(Default)]
-struct ResolutionBot;
+struct ResolutionBot {
+    attacking_index : usize
+}
 impl Player for ResolutionBot {
     /// Must be implemented
     fn get_player_settings(&self) -> PlayerSettings {
@@ -20,18 +22,22 @@ impl Player for ResolutionBot {
 
     /// Called on every game step
     fn on_step(&mut self, _iteration: usize) -> SC2Result<()> {
-        self.defend_townhall();
+        self.defend_base();
         self.get_minerals();
-        if self.counter().all().count(UnitTypeId::SupplyDepot) < 1 {
+
+        if self.counter().all().count(UnitTypeId::SupplyDepot) < 1
+         || (self.supply_left < 3 && self.supply_cap < 200) {
             self.construct_building(UnitTypeId::SupplyDepot);
-        } else if self.counter().all().count(UnitTypeId::Barracks) < 2  {
+        } else if self.counter().all().count(UnitTypeId::Barracks) < 4 {
             self.construct_building(UnitTypeId::Barracks);
         } 
-        if self.counter().all().count(UnitTypeId::Marine) < 10 {
+
+        if self.counter().all().count(UnitTypeId::Marine) < 20 {
             self.build_marine();
         } else {
-            self.attack_enemy_townhall();
+            self.attack_enemy_base();
         }
+
         Ok(())
     }
 
@@ -52,26 +58,46 @@ impl Player for ResolutionBot {
 
 const MARINE_RANGE : f32 = 5.0;
 impl ResolutionBot {
-    fn defend_townhall(&mut self) {
+    fn attack_targets(targets: &Units, marine: &Unit) {
+        if let Some(target) = targets
+        .in_range_of(marine, MARINE_RANGE).iter()
+        .min_by_key(|t| t.hits())
+        .or_else(|| targets.closest(marine)) {
+            marine.attack(Target::Pos(target.position()), false)
+        }
+    }
+
+    fn defend_base(&mut self) {
         if let Some(townhall) = self.units.my.townhalls.first() {
             let defend_location = townhall.position();
             let enemy = &self.units.enemy.all;
             let targets = enemy.filter(|e| e.is_closer(20.0, defend_location));
             for marine in &self.units.my.units.of_type(UnitTypeId::Marine) {
-                if let Some(target) = targets
-                .in_range_of(marine, MARINE_RANGE).iter()
-                .min_by_key(|t| t.hits())
-                .or_else(|| targets.closest(marine)) {
-                    marine.attack(Target::Pos(target.position()), false)
-                }
+                ResolutionBot::attack_targets(&targets, marine);
             }
         } 
     }
 
-    fn attack_enemy_townhall(&mut self) {
+    fn attack_enemy_base(&mut self) {
+        let targets = &self.units.enemy.all;
+        let mut index = self.attacking_index;
         for marine in &self.units.my.units.of_type(UnitTypeId::Marine) {
-            marine.move_to(Target::Pos(self.enemy_start), false)
+            if targets.is_empty() {
+                if self.attacking_index == 0 
+                && marine.position().is_further(MARINE_RANGE, self.enemy_start) {
+                        marine.move_to(Target::Pos(self.enemy_start), false)
+                } else if let Some(expansion) = self.enemy_expansions().nth(self.attacking_index) {
+                    if marine.position().is_further(MARINE_RANGE, expansion.center) {
+                        marine.move_to(Target::Pos(expansion.center), false)
+                    } else {
+                        index = index + 1;
+                    }
+                }
+            } else {
+                ResolutionBot::attack_targets(&targets, marine);
+            }
         }
+        self.attacking_index = index;
     }
 
     fn get_minerals(&mut self) {
@@ -87,19 +113,19 @@ impl ResolutionBot {
     }
 
 
-    fn construct_building(&mut self, id: UnitTypeId) { // Build close to map center to not accidentally block mineral line.
+    fn construct_building(&mut self, id: UnitTypeId) { 
         let main_base = self.start_location.towards(self.game_info.map_center, 8.0);
-        if self.can_afford(id, false) { // Finding exact location for the building.
+        if self.can_afford(id, false) { 
             if let Some(location) = self.find_placement(
-                UnitTypeId::Barracks,
+                id, 
                 main_base,
-                PlacementOptions {  step: 4, ..Default::default() }
-            ) { // Finding workers which are not already building.
+                PlacementOptions {  step: 2, ..Default::default() }
+            ) { 
                 if let Some(builder) = self.units.my.workers.iter()
                 .filter(|w| !w.is_constructing())
-                .closest(location) { // Ordering scv to build  
+                .closest(location) { 
                     builder.build(id, location, false);
-                    self.subtract_resources(UnitTypeId::Barracks, false);
+                    self.subtract_resources(id, false);
                 }
             }
         }
@@ -107,7 +133,7 @@ impl ResolutionBot {
 
     fn build_marine(&mut self) {
         let barracks =  &self.units.my.structures.of_type(UnitTypeId::Barracks);
-        for barrack in barracks.ready().idle() {
+        for barrack in barracks.almost_idle() {
             if self.can_afford(UnitTypeId::Marine, true) {
                 barrack.train(UnitTypeId::Marine, false);
                 self.subtract_resources(UnitTypeId::Marine, true);
@@ -121,6 +147,6 @@ impl ResolutionBot {
 fn main() -> SC2Result<()> {
     let mut bot = ResolutionBot::default();
      //VeryEasy, Easy, Medium, Hard, VeryHard
-    let computer = Computer::new(Race::Random, Difficulty::VeryEasy, None);
+    let computer = Computer::new(Race::Random, Difficulty::VeryHard, None);
     run_vs_computer(&mut bot, computer, "Flat64", Default::default(),)
 }
